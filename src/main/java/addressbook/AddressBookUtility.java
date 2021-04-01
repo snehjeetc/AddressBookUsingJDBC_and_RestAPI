@@ -70,4 +70,7 @@ public class AddressBookUtility {
                                    .orElse(null);
     }
 
+    public List<Contact> readDataBetween(String from, String to) throws AddressBookDBExceptions{
+        return addressBookDBService.readDataBetweenDates(addressMap ,from, to);
+    }
 }

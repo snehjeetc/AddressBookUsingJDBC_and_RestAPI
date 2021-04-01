@@ -23,9 +23,19 @@ public class AddressBookDBTest {
     @Test
     public void whenContactsUpdated_InDB_ShouldSyncWithSystem() throws AddressBookDBExceptions {
         addressBookservice.readData();
-        addressBookservice.updateData(2, null, null,  92357896211l, "abhishekBhaskar@gmail.com",
-                                      null);
+        addressBookservice.updateData(2, null, null,
+                                      92357896211l, "abhishekBhaskar@gmail.com", null);
         boolean result = addressBookservice.isSyncWithDB(2);
         Assert.assertTrue(result);
+    }
+
+    @Test
+    public void whenContactRetrieved_FromDB_ThatWereAdded_InParticularPeriod_ShouldMatchTheNumberOfEntries()
+    throws AddressBookDBExceptions{
+        String from = "2019-01-01";
+        String to = null;
+        List<Contact> contactList = addressBookservice.readDataBetween(from, to);
+        int entries = 2;
+        Assert.assertEquals(entries, contactList.size());
     }
 }

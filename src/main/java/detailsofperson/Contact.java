@@ -1,6 +1,7 @@
 package detailsofperson;
 import scannerwrapper.ScannerWrapped;
 
+import java.time.LocalDate;
 import java.util.Objects;
 
 public class Contact {
@@ -9,15 +10,17 @@ public class Contact {
 	String lastName;
 	long phoneNumber;
 	String email;
+	LocalDate added_date;
 	Address address;
 
 	public Contact(int contactID, String firstName, String lastName, long phoneNumber,
-                   String email, Address address) {
+                   String email, LocalDate added_date, Address address) {
         this.contactID = contactID;
         this.firstName = firstName;
         this.lastName = lastName;
         this.phoneNumber = phoneNumber;
         this.email = email;
+        this.added_date = added_date;
         this.address = address;
     }
 

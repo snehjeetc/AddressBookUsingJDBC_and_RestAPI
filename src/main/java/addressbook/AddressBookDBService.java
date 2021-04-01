@@ -4,6 +4,7 @@ import detailsofperson.Address;
 import detailsofperson.Contact;
 
 import java.sql.*;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -39,11 +40,10 @@ public class AddressBookDBService {
         preparedStatement = connection.prepareStatement(sql_for_preparedStatement);
     }
 
-    public List<Contact> readData(Map<Integer, Address> addressMap) throws AddressBookDBExceptions {
+    private List<Contact> retrieveData(Map<Integer, Address> addressMap, String sql_Select_query) throws AddressBookDBExceptions {
         List<Contact> contactList = new ArrayList<>();
         Connection connection = this.getConnection();
 
-        String sql_Select_query = "SELECT * FROM contact_table";
         try(Statement statement = connection.createStatement()){
             this.readAddress(connection, addressMap);
             ResultSet resultSet = statement.executeQuery(sql_Select_query);
@@ -54,8 +54,9 @@ public class AddressBookDBService {
                 long phoneNumber = resultSet.getLong("phoneNumber");
                 String email = resultSet.getString("email");
                 Integer zip_code = resultSet.getInt("zip_code");
+                LocalDate added_date = resultSet.getDate("added_date").toLocalDate();
                 Contact contact = new Contact(contactID, firstName, lastName,
-                                              phoneNumber, email, addressMap.get(zip_code));
+                                              phoneNumber, email, added_date, addressMap.get(zip_code));
                 contactList.add(contact);
             }
             return contactList;
@@ -70,6 +71,11 @@ public class AddressBookDBService {
                 throw new AddressBookDBExceptions(AddressBookDBExceptions.Status.CONNECTION_CLOSING_FAILURE);
             }
         }
+    }
+
+    public List<Contact> readData(Map<Integer, Address> addressMap) throws AddressBookDBExceptions{
+        String sql = "SELECT * FROM contact_table";
+        return this.retrieveData(addressMap, sql);
     }
 
     private void readAddress(Connection connection, Map<Integer, Address> addressMap) throws AddressBookDBExceptions {
@@ -195,11 +201,23 @@ public class AddressBookDBService {
                 String lastName = resultSet.getString("lastName");
                 long phoneNumber = resultSet.getLong("phoneNumber");
                 String email = resultSet.getString("email");
-                contact = new Contact(contactID, firstName, lastName, phoneNumber, email, null);
+                LocalDate added_date = resultSet.getDate("added_date").toLocalDate();
+                contact = new Contact(contactID, firstName, lastName, phoneNumber, email, added_date,null);
             }
             return contact;
         } catch (SQLException e) {
             throw new AddressBookDBExceptions(AddressBookDBExceptions.Status.READ_FAILURE);
         }
+    }
+
+    public List<Contact> readDataBetweenDates(Map<Integer, Address> addressMap,
+                                              String from, String to)
+    throws AddressBookDBExceptions{
+        LocalDate fromDate = LocalDate.parse(from);
+        LocalDate toDate = (to == null) ? LocalDate.now() : LocalDate.parse(to);
+        String sql_select_query = String.format("SELECT * FROM contact_table " +
+                                  "WHERE added_date BETWEEN '%s' AND '%s'",
+                                   fromDate, toDate);
+        return this.retrieveData(addressMap, sql_select_query);
     }
 }
