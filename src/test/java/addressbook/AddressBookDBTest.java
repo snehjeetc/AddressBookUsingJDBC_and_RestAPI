@@ -38,4 +38,14 @@ public class AddressBookDBTest {
         int entries = 2;
         Assert.assertEquals(entries, contactList.size());
     }
+
+    @Test
+    public void whenCountedContactsInTheDatabase_ByCityAndState_ShouldMatchTheNumberOfCounts() throws AddressBookDBExceptions {
+        String cityName = "Lucknow";
+        String stateName = "UP";
+        Integer countCity = addressBookservice.count(AddressBookDBService.CountBy.CITY, cityName);
+        Integer countState= addressBookservice.count(AddressBookDBService.CountBy.STATE, stateName);
+        Assert.assertTrue(countCity.equals(Integer.valueOf(1)) &&
+                countState.equals(Integer.valueOf(1)));
+    }
 }

@@ -73,4 +73,8 @@ public class AddressBookUtility {
     public List<Contact> readDataBetween(String from, String to) throws AddressBookDBExceptions{
         return addressBookDBService.readDataBetweenDates(addressMap ,from, to);
     }
+
+    public int count(AddressBookDBService.CountBy param, String name) throws AddressBookDBExceptions {
+        return addressBookDBService.count(param, name);
+    }
 }

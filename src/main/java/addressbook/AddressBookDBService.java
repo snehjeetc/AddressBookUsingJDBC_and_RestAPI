@@ -10,6 +10,17 @@ import java.util.List;
 import java.util.Map;
 
 public class AddressBookDBService {
+
+    enum CountBy{
+        CITY ("city"),
+        STATE ("state");
+
+        private String filler;
+        CountBy(String filler){
+            this.filler = filler;
+        }
+    }
+
     private static String jdbcUrl = "jdbc:mysql://localhost:3306/AddressBookServiceDB?useSSL=false";
     private static String userName = "root";
     private static String passWord = "Rooting@1";
@@ -219,5 +230,29 @@ public class AddressBookDBService {
                                   "WHERE added_date BETWEEN '%s' AND '%s'",
                                    fromDate, toDate);
         return this.retrieveData(addressMap, sql_select_query);
+    }
+
+    public int count(CountBy param, String name) throws AddressBookDBExceptions {
+       String sql = String.format("SELECT COUNT(%s) FROM " +
+                                  "contact_table JOIN zip_table USING (zip_code) " +
+                                  "WHERE %s = '%s' " +
+                                  "GROUP BY %s",
+                                   param.filler, param.filler, name, param.filler);
+       int count = 0;
+       Connection connection = this.getConnection();
+       try( Statement statement = connection.createStatement()){
+            ResultSet resultSet = statement.executeQuery(sql);
+            if(resultSet.next())
+                count = resultSet.getInt(1);
+            return count;
+       } catch (SQLException e) {
+           throw new AddressBookDBExceptions(AddressBookDBExceptions.Status.READ_FAILURE);
+       }finally{
+           try {
+               connection.close();
+           } catch (SQLException e) {
+               throw new AddressBookDBExceptions(AddressBookDBExceptions.Status.CONNECTION_CLOSING_FAILURE);
+           }
+       }
     }
 }
