@@ -56,12 +56,14 @@ public class AddressBookUtility {
             if(addressMap.containsKey(address.getZip_code()))
                 address = addressMap.get(address.getZip_code());
         this.addressBookDBService.updateContact(contactID, firstName, lastName,
-                                                                    phoneNumber, email, address);
+                                                phoneNumber, email, address);
         existingContact.setFirstName(firstName);
         existingContact.setLastName(lastName);
         existingContact.setPhoneNumber(phoneNumber);
         existingContact.setEmail(email);
         existingContact.setAddress(address);
+        if(!addressMap.containsKey(address.getZip_code()))
+            addressMap.put(address.getZip_code(), address);
     }
 
     private Contact getContact(int contactID) {
@@ -76,5 +78,49 @@ public class AddressBookUtility {
 
     public int count(AddressBookDBService.CountBy param, String name) throws AddressBookDBExceptions {
         return addressBookDBService.count(param, name);
+    }
+
+    public int writeContact(String firstName, String lastName, long phoneNumber, String email) throws AddressBookDBExceptions {
+        Contact contactAdded = this.addressBookDBService.writeContact(firstName, lastName, phoneNumber, email);
+        contactList.add(contactAdded);
+        return contactAdded.getContactID();
+    }
+
+    public int writeContact(String firstName, String lastName, long phoneNumber) throws AddressBookDBExceptions {
+        Contact contactAdded = this.addressBookDBService.writeContact(firstName, lastName, phoneNumber);
+        contactList.add(contactAdded);
+        return contactAdded.getContactID();
+    }
+
+    public int writeContact(String firstName, long phoneNumber) throws AddressBookDBExceptions {
+        Contact contactAdded = this.addressBookDBService.writeContact(firstName, phoneNumber);
+        contactList.add(contactAdded);
+        return contactAdded.getContactID();
+    }
+
+    public int writeContact(String firstName, String lastName,
+                             long phoneNumber, String email,
+                             Address address) throws AddressBookDBExceptions {
+        Contact contactAdded = this.addressBookDBService.writeContact(firstName, lastName, phoneNumber, email, address);
+        contactList.add(contactAdded);
+        if(!addressMap.containsKey(address.getZip_code()))
+            addressMap.put(address.getZip_code(), address);
+        return contactAdded.getContactID();
+    }
+
+    public int writeContact(String firstName, String lastName, long phoneNumber, Address address) throws AddressBookDBExceptions {
+        Contact contactAdded = this.addressBookDBService.writeContact(firstName, lastName, phoneNumber, address);
+        contactList.add(contactAdded);
+        if(!addressMap.containsKey(address.getZip_code()))
+            addressMap.put(address.getZip_code(), address);
+        return contactAdded.getContactID();
+    }
+
+    public int writeContact(String firstName, long phoneNumber, Address address) throws AddressBookDBExceptions {
+        Contact contactAdded = this.addressBookDBService.writeContact(firstName, phoneNumber, address);
+        contactList.add(contactAdded);
+        if(!addressMap.containsKey(address.getZip_code()))
+            addressMap.put(address.getZip_code(), address);
+        return contactAdded.getContactID();
     }
 }

@@ -255,4 +255,349 @@ public class AddressBookDBService {
            }
        }
     }
+
+    private int write(Connection connection, String sql) throws SQLException {
+        int primaryKey = -1;
+        try(Statement statement = connection.createStatement()){
+            int rowsAffected = statement.executeUpdate(sql, Statement.RETURN_GENERATED_KEYS);
+            if(rowsAffected == 1) {
+                ResultSet resultSet = statement.getGeneratedKeys();
+                if(resultSet.next()) primaryKey = resultSet.getInt(1);
+            }
+            return primaryKey;
+        }
+    }
+
+    public Contact writeContact(String firstName, String lastName, long phoneNumber, String email) throws AddressBookDBExceptions {
+        Connection connection = this.getConnection();
+        LocalDate currentDate = LocalDate.now();
+        String sql = String.format("INSERT INTO contact_table " +
+                                   "(firstName, lastName, phoneNumber, email, added_date) VALUES " +
+                                   "('%s', '%s', %s, '%s', '%s')",
+                                    firstName, lastName, phoneNumber, email, currentDate);
+        try {
+            int contactID = this.write(connection, sql);
+            return new Contact(contactID, firstName, lastName, phoneNumber, email, currentDate, null);
+        } catch (SQLException e) {
+            throw new AddressBookDBExceptions(AddressBookDBExceptions.Status.UPDATION_FAILURE);
+        }finally{
+            try {
+                connection.close();
+            } catch (SQLException e) {
+                throw new AddressBookDBExceptions(AddressBookDBExceptions.Status.CONNECTION_CLOSING_FAILURE);
+            }
+        }
+    }
+
+    public Contact writeContact(String firstName, String lastName, long phoneNumber) throws AddressBookDBExceptions {
+        Connection connection = this.getConnection();
+        LocalDate currentDate = LocalDate.now();
+        String sql = String.format("INSERT INTO contact_table " +
+                        "(firstName, lastName, phoneNumber, added_date) VALUES " +
+                        "('%s', '%s', %s, '%s')",
+                firstName, lastName, phoneNumber, currentDate);
+        try {
+            int contactID = this.write(connection, sql);
+            return new Contact(contactID, firstName, lastName, phoneNumber, null, currentDate, null);
+        } catch (SQLException e) {
+            throw new AddressBookDBExceptions(AddressBookDBExceptions.Status.UPDATION_FAILURE);
+        }finally{
+            try {
+                connection.close();
+            } catch (SQLException e) {
+                throw new AddressBookDBExceptions(AddressBookDBExceptions.Status.CONNECTION_CLOSING_FAILURE);
+            }
+        }
+    }
+
+    public Contact writeContact(String firstName, long phoneNumber) throws AddressBookDBExceptions {
+        Connection connection = this.getConnection();
+        LocalDate currentDate = LocalDate.now();
+        String sql = String.format("INSERT INTO contact_table " +
+                        "(firstName, phoneNumber, added_date) VALUES " +
+                        "('%s', %s, '%s')",
+                firstName, phoneNumber, currentDate);
+        try {
+            int contactID = this.write(connection, sql);
+            return new Contact(contactID, firstName, null, phoneNumber, null, currentDate, null);
+        } catch (SQLException e) {
+            throw new AddressBookDBExceptions(AddressBookDBExceptions.Status.UPDATION_FAILURE);
+        }finally{
+            try {
+                connection.close();
+            } catch (SQLException e) {
+                throw new AddressBookDBExceptions(AddressBookDBExceptions.Status.CONNECTION_CLOSING_FAILURE);
+            }
+        }
+    }
+
+    public Contact writeContact(String firstName, String lastName, long phoneNumber, String email, Address address) throws AddressBookDBExceptions {
+        Connection connection = this.getConnection();
+        Contact contact;
+        try {
+            connection.setAutoCommit(false);
+        } catch (SQLException e) {
+            try {
+                connection.close();
+            } catch (SQLException throwables) {
+                throw new AddressBookDBExceptions(AddressBookDBExceptions.Status.TRANSACTION_FAILURE,
+                                                  AddressBookDBExceptions.Status.CONNECTION_CLOSING_FAILURE);
+            }
+            throw new AddressBookDBExceptions(AddressBookDBExceptions.Status.TRANSACTION_FAILURE);
+        }
+        LocalDate currentDate = LocalDate.now();
+        String sql = String.format("INSERT INTO contact_table " +
+                        "(firstName, lastName, phoneNumber, email, added_date) VALUES " +
+                        "('%s', '%s', %s, '%s', '%s')",
+                firstName, lastName, phoneNumber, email, currentDate);
+        try {
+            int contactID = this.write(connection, sql);
+            contact = new Contact(contactID, firstName, lastName, phoneNumber, email, currentDate, null);
+        } catch (SQLException e) {
+            try {
+                connection.rollback();
+            } catch (SQLException throwables) {
+                throw new AddressBookDBExceptions(AddressBookDBExceptions.Status.UPDATION_FAILURE,
+                                                  AddressBookDBExceptions.Status.TRANSACTION_FAILURE);
+            }
+            try {
+                connection.close();
+            } catch (SQLException throwables) {
+                throw new AddressBookDBExceptions(AddressBookDBExceptions.Status.UPDATION_FAILURE,
+                                                  AddressBookDBExceptions.Status.CONNECTION_CLOSING_FAILURE);
+            }
+            throw new AddressBookDBExceptions(AddressBookDBExceptions.Status.UPDATION_FAILURE);
+        }
+        try {
+            this.updateAdderssBookTable(connection, address);
+        } catch (SQLException e) {
+            try {
+                connection.rollback();
+            } catch (SQLException throwables) {
+                throw new AddressBookDBExceptions(AddressBookDBExceptions.Status.UPDATION_FAILURE,
+                                                  AddressBookDBExceptions.Status.TRANSACTION_FAILURE);
+            }
+            try {
+                connection.close();
+            } catch (SQLException throwables) {
+                throw new AddressBookDBExceptions(AddressBookDBExceptions.Status.UPDATION_FAILURE,
+                                                  AddressBookDBExceptions.Status.CONNECTION_CLOSING_FAILURE);
+            }
+            throw new AddressBookDBExceptions(AddressBookDBExceptions.Status.UPDATION_FAILURE);
+        }
+        String sql_Update_Query = String.format("UPDATE contact_table " +
+                                   "SET zip_code = %s " +
+                                   "WHERE contactID = %s",
+                                    address.getZip_code(), contact.getContactID());
+        try {
+            this.write(connection, sql_Update_Query);
+        } catch (SQLException e) {
+            try {
+                connection.rollback();
+            } catch (SQLException throwables) {
+                throw new AddressBookDBExceptions(AddressBookDBExceptions.Status.UPDATION_FAILURE,
+                        AddressBookDBExceptions.Status.TRANSACTION_FAILURE);
+            }
+            try {
+                connection.close();
+            } catch (SQLException throwables) {
+                throw new AddressBookDBExceptions(AddressBookDBExceptions.Status.UPDATION_FAILURE,
+                        AddressBookDBExceptions.Status.CONNECTION_CLOSING_FAILURE);
+            }
+            throw new AddressBookDBExceptions(AddressBookDBExceptions.Status.UPDATION_FAILURE);
+        }
+        try {
+            connection.commit();
+        } catch (SQLException e) {
+            throw new AddressBookDBExceptions(AddressBookDBExceptions.Status.TRANSACTION_FAILURE);
+        }finally{
+            try {
+                connection.close();
+            } catch (SQLException e) {
+                throw new AddressBookDBExceptions(AddressBookDBExceptions.Status.CONNECTION_CLOSING_FAILURE);
+            }
+        }
+        contact.setAddress(address);
+        return contact;
+    }
+
+    public Contact writeContact(String firstName, String lastName, long phoneNumber, Address address) throws AddressBookDBExceptions {
+        Connection connection = this.getConnection();
+        Contact contact;
+        try {
+            connection.setAutoCommit(false);
+        } catch (SQLException e) {
+            try {
+                connection.close();
+            } catch (SQLException throwables) {
+                throw new AddressBookDBExceptions(AddressBookDBExceptions.Status.TRANSACTION_FAILURE,
+                        AddressBookDBExceptions.Status.CONNECTION_CLOSING_FAILURE);
+            }
+            throw new AddressBookDBExceptions(AddressBookDBExceptions.Status.TRANSACTION_FAILURE);
+        }
+        LocalDate currentDate = LocalDate.now();
+        String sql = String.format("INSERT INTO contact_table " +
+                                   "(firstName, lastName, phoneNumber, added_date) VALUES " +
+                                   "('%s', '%s', %s, '%s')",
+                firstName, lastName, phoneNumber, currentDate);
+        try {
+            int contactID = this.write(connection, sql);
+            contact = new Contact(contactID, firstName, lastName, phoneNumber, null, currentDate, null);
+        } catch (SQLException e) {
+            try {
+                connection.rollback();
+            } catch (SQLException throwables) {
+                throw new AddressBookDBExceptions(AddressBookDBExceptions.Status.UPDATION_FAILURE,
+                        AddressBookDBExceptions.Status.TRANSACTION_FAILURE);
+            }
+            try {
+                connection.close();
+            } catch (SQLException throwables) {
+                throw new AddressBookDBExceptions(AddressBookDBExceptions.Status.UPDATION_FAILURE,
+                        AddressBookDBExceptions.Status.CONNECTION_CLOSING_FAILURE);
+            }
+            throw new AddressBookDBExceptions(AddressBookDBExceptions.Status.UPDATION_FAILURE);
+        }
+        try {
+            this.updateAdderssBookTable(connection, address);
+        } catch (SQLException e) {
+            try {
+                connection.rollback();
+            } catch (SQLException throwables) {
+                throw new AddressBookDBExceptions(AddressBookDBExceptions.Status.UPDATION_FAILURE,
+                        AddressBookDBExceptions.Status.TRANSACTION_FAILURE);
+            }
+            try {
+                connection.close();
+            } catch (SQLException throwables) {
+                throw new AddressBookDBExceptions(AddressBookDBExceptions.Status.UPDATION_FAILURE,
+                        AddressBookDBExceptions.Status.CONNECTION_CLOSING_FAILURE);
+            }
+            throw new AddressBookDBExceptions(AddressBookDBExceptions.Status.UPDATION_FAILURE);
+        }
+        String sql_Update_Query = String.format("UPDATE contact_table " +
+                                                "SET zip_code = %s " +
+                                                "WHERE contactID = %s",
+                address.getZip_code(), contact.getContactID());
+        try {
+            this.write(connection, sql_Update_Query);
+        } catch (SQLException e) {
+            try {
+                connection.rollback();
+            } catch (SQLException throwables) {
+                throw new AddressBookDBExceptions(AddressBookDBExceptions.Status.UPDATION_FAILURE,
+                        AddressBookDBExceptions.Status.TRANSACTION_FAILURE);
+            }
+            try {
+                connection.close();
+            } catch (SQLException throwables) {
+                throw new AddressBookDBExceptions(AddressBookDBExceptions.Status.UPDATION_FAILURE,
+                        AddressBookDBExceptions.Status.CONNECTION_CLOSING_FAILURE);
+            }
+            throw new AddressBookDBExceptions(AddressBookDBExceptions.Status.UPDATION_FAILURE);
+        }
+        try {
+            connection.commit();
+        } catch (SQLException e) {
+            throw new AddressBookDBExceptions(AddressBookDBExceptions.Status.TRANSACTION_FAILURE);
+        }finally{
+            try {
+                connection.close();
+            } catch (SQLException e) {
+                throw new AddressBookDBExceptions(AddressBookDBExceptions.Status.CONNECTION_CLOSING_FAILURE);
+            }
+        }
+        contact.setAddress(address);
+        return contact;
+    }
+
+    public Contact writeContact(String firstName, long phoneNumber, Address address) throws AddressBookDBExceptions {
+        Connection connection = this.getConnection();
+        Contact contact;
+        try {
+            connection.setAutoCommit(false);
+        } catch (SQLException e) {
+            try {
+                connection.close();
+            } catch (SQLException throwables) {
+                throw new AddressBookDBExceptions(AddressBookDBExceptions.Status.TRANSACTION_FAILURE,
+                        AddressBookDBExceptions.Status.CONNECTION_CLOSING_FAILURE);
+            }
+            throw new AddressBookDBExceptions(AddressBookDBExceptions.Status.TRANSACTION_FAILURE);
+        }
+        LocalDate currentDate = LocalDate.now();
+        String sql = String.format("INSERT INTO contact_table " +
+                                   "(firstName, phoneNumber, added_date) VALUES " +
+                                   "('%s', %s, '%s')",
+                firstName, phoneNumber, currentDate);
+        try {
+            int contactID = this.write(connection, sql);
+            contact = new Contact(contactID, firstName, null, phoneNumber, null, currentDate, null);
+        } catch (SQLException e) {
+            try {
+                connection.rollback();
+            } catch (SQLException throwables) {
+                throw new AddressBookDBExceptions(AddressBookDBExceptions.Status.UPDATION_FAILURE,
+                        AddressBookDBExceptions.Status.TRANSACTION_FAILURE);
+            }
+            try {
+                connection.close();
+            } catch (SQLException throwables) {
+                throw new AddressBookDBExceptions(AddressBookDBExceptions.Status.UPDATION_FAILURE,
+                        AddressBookDBExceptions.Status.CONNECTION_CLOSING_FAILURE);
+            }
+            throw new AddressBookDBExceptions(AddressBookDBExceptions.Status.UPDATION_FAILURE);
+        }
+        try {
+            this.updateAdderssBookTable(connection, address);
+        } catch (SQLException e) {
+            try {
+                connection.rollback();
+            } catch (SQLException throwables) {
+                throw new AddressBookDBExceptions(AddressBookDBExceptions.Status.UPDATION_FAILURE,
+                        AddressBookDBExceptions.Status.TRANSACTION_FAILURE);
+            }
+            try {
+                connection.close();
+            } catch (SQLException throwables) {
+                throw new AddressBookDBExceptions(AddressBookDBExceptions.Status.UPDATION_FAILURE,
+                        AddressBookDBExceptions.Status.CONNECTION_CLOSING_FAILURE);
+            }
+            throw new AddressBookDBExceptions(AddressBookDBExceptions.Status.UPDATION_FAILURE);
+        }
+        String sql_Update_Query = String.format("UPDATE contact_table " +
+                                                "SET zip_code = %s " +
+                                                "WHERE contactID = %s",
+                                                address.getZip_code(), contact.getContactID());
+        try {
+            this.write(connection, sql_Update_Query);
+        } catch (SQLException e) {
+            try {
+                connection.rollback();
+            } catch (SQLException throwables) {
+                throw new AddressBookDBExceptions(AddressBookDBExceptions.Status.UPDATION_FAILURE,
+                        AddressBookDBExceptions.Status.TRANSACTION_FAILURE);
+            }
+            try {
+                connection.close();
+            } catch (SQLException throwables) {
+                throw new AddressBookDBExceptions(AddressBookDBExceptions.Status.UPDATION_FAILURE,
+                        AddressBookDBExceptions.Status.CONNECTION_CLOSING_FAILURE);
+            }
+            throw new AddressBookDBExceptions(AddressBookDBExceptions.Status.UPDATION_FAILURE);
+        }
+        try {
+            connection.commit();
+        } catch (SQLException e) {
+            throw new AddressBookDBExceptions(AddressBookDBExceptions.Status.TRANSACTION_FAILURE);
+        }finally{
+            try {
+                connection.close();
+            } catch (SQLException e) {
+                throw new AddressBookDBExceptions(AddressBookDBExceptions.Status.CONNECTION_CLOSING_FAILURE);
+            }
+        }
+        contact.setAddress(address);
+        return contact;
+    }
 }

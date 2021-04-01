@@ -48,4 +48,12 @@ public class AddressBookDBTest {
         Assert.assertTrue(countCity.equals(Integer.valueOf(1)) &&
                 countState.equals(Integer.valueOf(1)));
     }
+
+    @Test
+    public void whenAddedAContactToDB_ShouldSyncWithThe_System() throws AddressBookDBExceptions {
+        addressBookservice.readData();
+        int contactID = addressBookservice.writeContact("Some", "Girl", 9232314568l, "someGirl@gmail.com");
+        boolean result = addressBookservice.isSyncWithDB(contactID);
+        Assert.assertTrue(result);
+    }
 }
