@@ -12,7 +12,9 @@ public class AddressBookDBService {
     private static String jdbcUrl = "jdbc:mysql://localhost:3306/AddressBookServiceDB?useSSL=false";
     private static String userName = "root";
     private static String passWord = "Rooting@1";
+    private static String sql_for_preparedStatement = "SELECT * FROM contact_table WHERE contactID = ?";
 
+    private static PreparedStatement preparedStatement;
     private static AddressBookDBService addressBookDBService;
 
     private AddressBookDBService(){}
@@ -31,6 +33,10 @@ public class AddressBookDBService {
         } catch (SQLException e) {
             throw new AddressBookDBExceptions(AddressBookDBExceptions.Status.CONNECTION_FAILURE);
         }
+    }
+
+    private static void prepareStatement(Connection connection) throws SQLException {
+        preparedStatement = connection.prepareStatement(sql_for_preparedStatement);
     }
 
     public List<Contact> readData(Map<Integer, Address> addressMap) throws AddressBookDBExceptions {
@@ -81,6 +87,119 @@ public class AddressBookDBService {
             }
         } catch (SQLException e) {
            throw new AddressBookDBExceptions(AddressBookDBExceptions.Status.READ_FAILURE);
+        }
+    }
+
+
+    public void updateContact(int contactID, String firstName, String lastName,
+                                 Long phoneNumber, String email, Address address) throws AddressBookDBExceptions{
+        Connection connection = this.getConnection();
+        try {
+            connection.setAutoCommit(false);
+        } catch (SQLException e) {
+            try {
+                connection.close();
+            } catch (SQLException throwables) {
+                throw new AddressBookDBExceptions(AddressBookDBExceptions.Status.TRANSACTION_FAILURE,
+                                                  AddressBookDBExceptions.Status.CONNECTION_CLOSING_FAILURE);
+            }
+            throw new AddressBookDBExceptions(AddressBookDBExceptions.Status.TRANSACTION_FAILURE);
+        }
+        try {
+            this.updateAdderssBookTable(connection, address);
+        } catch (SQLException e) {
+            try {
+                connection.rollback();
+            } catch (SQLException throwables) {
+                throw new AddressBookDBExceptions(AddressBookDBExceptions.Status.UPDATION_FAILURE,
+                                                  AddressBookDBExceptions.Status.TRANSACTION_FAILURE);
+            }
+            try {
+                connection.close();
+            } catch (SQLException throwables) {
+                throw new AddressBookDBExceptions(AddressBookDBExceptions.Status.UPDATION_FAILURE,
+                                                  AddressBookDBExceptions.Status.CONNECTION_CLOSING_FAILURE);
+            }
+            throw new AddressBookDBExceptions(AddressBookDBExceptions.Status.UPDATION_FAILURE);
+        }
+        String sqlUpdate = String.format("UPDATE contact_table " +
+                                         "SET firstName = '%s', lastName = '%s', phoneNumber = %s, " +
+                                         "email = '%s', zip_code = %s " +
+                                         "WHERE contactID = %s",
+                                        firstName, lastName, phoneNumber, email, address.getZip_code(), contactID);
+        try(Statement statement = connection.createStatement()){
+            statement.executeUpdate(sqlUpdate);
+        } catch (SQLException e) {
+            try {
+                connection.rollback();
+            } catch (SQLException throwables) {
+                throw new AddressBookDBExceptions(AddressBookDBExceptions.Status.UPDATION_FAILURE,
+                                                  AddressBookDBExceptions.Status.TRANSACTION_FAILURE);
+            }
+            try {
+                connection.close();
+            } catch (SQLException throwables) {
+                throw new AddressBookDBExceptions(AddressBookDBExceptions.Status.UPDATION_FAILURE,
+                                                  AddressBookDBExceptions.Status.CONNECTION_CLOSING_FAILURE);
+            }
+            throw new AddressBookDBExceptions(AddressBookDBExceptions.Status.UPDATION_FAILURE);
+        }
+        try {
+            connection.commit();
+        } catch (SQLException e) {
+            throw new AddressBookDBExceptions(AddressBookDBExceptions.Status.TRANSACTION_FAILURE);
+        }finally{
+            try {
+                connection.close();
+            } catch (SQLException e) {
+                throw new AddressBookDBExceptions(AddressBookDBExceptions.Status.CONNECTION_CLOSING_FAILURE);
+            }
+        }
+    }
+
+    private int updateAdderssBookTable(Connection connection, Address address) throws SQLException {
+        try(Statement statement = connection.createStatement()){
+            String sql = String.format("SELECT zip_code FROM zip_table WHERE zip_code = %s", address.getZip_code());
+            ResultSet resultSet = statement.executeQuery(sql);
+            if(resultSet.next()) return 0;
+            String sqlUpdate = String.format("INSERT INTO zip_table " +
+                                             "(zip_code, city, state) VALUES " +
+                                             "(%s, '%s', '%s')",
+                                             address.getZip_code(), address.getCity(), address.getState());
+            int rowsAffected = statement.executeUpdate(sqlUpdate);
+            return rowsAffected;
+        }
+    }
+
+    public Contact getContact(int contactID) throws AddressBookDBExceptions {
+        Connection connection = this.getConnection();
+        if(preparedStatement == null) {
+            try {
+                prepareStatement(connection);
+            } catch (SQLException e) {
+                try {
+                    connection.close();
+                } catch (SQLException throwables) {
+                    throw new AddressBookDBExceptions(AddressBookDBExceptions.Status.READ_FAILURE,
+                                                      AddressBookDBExceptions.Status.CONNECTION_CLOSING_FAILURE);
+                }
+                throw new AddressBookDBExceptions(AddressBookDBExceptions.Status.READ_FAILURE);
+            }
+        }
+        Contact contact = null;
+        try {
+            preparedStatement.setInt(1, contactID);
+            ResultSet resultSet = preparedStatement.executeQuery();
+            if(resultSet.next()){
+                String firstName = resultSet.getString("firstName");
+                String lastName = resultSet.getString("lastName");
+                long phoneNumber = resultSet.getLong("phoneNumber");
+                String email = resultSet.getString("email");
+                contact = new Contact(contactID, firstName, lastName, phoneNumber, email, null);
+            }
+            return contact;
+        } catch (SQLException e) {
+            throw new AddressBookDBExceptions(AddressBookDBExceptions.Status.READ_FAILURE);
         }
     }
 }

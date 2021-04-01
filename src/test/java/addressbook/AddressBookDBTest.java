@@ -19,4 +19,13 @@ public class AddressBookDBTest {
         int contact_count = 4;
         Assert.assertEquals(contact_count, contactList.size());
     }
+
+    @Test
+    public void whenContactsUpdated_InDB_ShouldSyncWithSystem() throws AddressBookDBExceptions {
+        addressBookservice.readData();
+        addressBookservice.updateData(2, null, null,  92357896211l, "abhishekBhaskar@gmail.com",
+                                      null);
+        boolean result = addressBookservice.isSyncWithDB(2);
+        Assert.assertTrue(result);
+    }
 }

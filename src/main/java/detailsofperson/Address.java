@@ -12,4 +12,16 @@ public class Address {
 		this.city = city;
 		this.state = state;
 	}
+
+	public int getZip_code() {
+		return zip_code;
+	}
+
+	public String getCity() {
+		return city;
+	}
+
+	public String getState() {
+		return state;
+	}
 }
