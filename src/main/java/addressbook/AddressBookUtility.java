@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 
 public class AddressBookUtility {
+
     private List<Contact> contactList;
     private Map<Integer, Address> addressMap;
     private AddressBookDBService addressBookDBService;
@@ -17,6 +18,11 @@ public class AddressBookUtility {
         addressBookDBService = AddressBookDBService.getInstance();
         this.contactList = new ArrayList<>();
         this.addressMap = new HashMap<>();
+    }
+
+    public AddressBookUtility(List<Contact> contactList) {
+        this();
+        this.contactList = new ArrayList<>(contactList);
     }
 
     public List<Contact> readData() throws AddressBookDBExceptions {
