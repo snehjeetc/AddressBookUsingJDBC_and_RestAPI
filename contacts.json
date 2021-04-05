@@ -1,0 +1,89 @@
+{
+    "contactlist": [
+        {
+            "contactID": 1,
+            "firstName": "Sayan",
+            "lastName": "Sarkar",
+            "phoneNumber": 8823141599,
+            "email": "sayansarkar@gmail.com",
+            "added_date": {
+                "year": 2021,
+                "month": 4,
+                "day": 6
+            },
+            "address": {
+                "zip_code": 700052,
+                "city": "Kolkata",
+                "state": "West Bengal"
+            }
+        },
+        {
+            "contactID": 2,
+            "firstName": "Chayan",
+            "lastName": "Ghosh",
+            "phoneNumber": 7777723421,
+            "email": "chayanghost@gmail.com",
+            "added_date": {
+                "year": 2021,
+                "month": 4,
+                "day": 6
+            },
+            "address": {
+                "zip_code": 735215,
+                "city": "Hasimara",
+                "state": "West Bengal"
+            }
+        },
+        {
+            "contactID": 3,
+            "firstName": "Nayan",
+            "lastName": "Singh",
+            "phoneNumber": 9897897333,
+            "email": "nayan@gmail.com",
+            "added_date": {
+                "year": 2021,
+                "month": 4,
+                "day": 6
+            },
+            "address": {
+                "zip_code": 190001,
+                "city": "Srinagar",
+                "state": "J\u0026K"
+            }
+        },
+        {
+            "contactID": 4,
+            "firstName": "Dale",
+            "lastName": "Stein",
+            "phoneNumber": 9234998929,
+            "email": "dailystoned@gmail.com",
+            "added_date": {
+                "year": 2021,
+                "month": 4,
+                "day": 6
+            },
+            "address": {
+                "zip_code": 500001,
+                "city": "Hyderabad",
+                "state": "Telengana"
+            }
+        },
+        {
+            "contactID": 5,
+            "firstName": "Scorpion",
+            "lastName": "Tail",
+            "phoneNumber": 9247888899,
+            "email": "thescorpiontail@gmail.com",
+            "added_date": {
+                "year": 2021,
+                "month": 4,
+                "day": 6
+            },
+            "address": {
+                "zip_code": 734104,
+                "city": "Darjeeling",
+                "state": "West Bengal"
+            }
+        }
+    ]
+}
