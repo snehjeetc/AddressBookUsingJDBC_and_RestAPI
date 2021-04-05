@@ -13,6 +13,10 @@ public class Contact {
 	LocalDate added_date;
 	Address address;
 
+	public Contact(){
+
+    }
+
 	public Contact(int contactID, String firstName, String lastName, long phoneNumber,
                    String email, LocalDate added_date, Address address) {
         this.contactID = contactID;
@@ -72,6 +76,8 @@ public class Contact {
         this.address = address;
     }
 
+    public LocalDate getDate() { return added_date; }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -83,4 +89,16 @@ public class Contact {
                 Objects.equals(lastName, contact.lastName) &&
                 Objects.equals(email, contact.email);
     }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(contactID, firstName, phoneNumber);
+    }
+
+    @Override
+    public String toString(){
+	    return contactID + " " + firstName + " " + phoneNumber;
+    }
+
+
 }

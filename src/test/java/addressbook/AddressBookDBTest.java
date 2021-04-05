@@ -1,10 +1,13 @@
 package addressbook;
 
+import detailsofperson.Address;
 import detailsofperson.Contact;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.time.LocalDate;
+import java.util.Arrays;
 import java.util.List;
 
 public class AddressBookDBTest {
@@ -55,5 +58,30 @@ public class AddressBookDBTest {
         int contactID = addressBookservice.writeContact("Some", "Girl", 9232314568l, "someGirl@gmail.com");
         boolean result = addressBookservice.isSyncWithDB(contactID);
         Assert.assertTrue(result);
+    }
+
+    @Test
+    public void givenMultipleEmployees_WhenAddedToDB_UsingMultithreading_ShouldMatchEmployeeEntries() throws AddressBookDBExceptions {
+        Contact[] contacts = new Contact[] {
+                new Contact(0, "Sayan", "Sarkar", 8823141599l,
+                        "sayansarkar@gmail.com", LocalDate.now(),
+                              new Address(	700052, "Kolkata", "West Bengal")),
+                new Contact(0, "Chayan", "Ghosh", 7777723421l,
+                            "chayanghost@gmail.com", LocalDate.now(),
+                              new Address(735215, "Hasimara", "West Bengal")),
+                new Contact(0, "Nayan", "Singh", 9897897333l,
+                           "nayan@gmail.com", LocalDate.now(),
+                              new Address(190001, "Srinagar", "J&K")),
+                new Contact(0, "Dale", "Stein", 9234998929l,
+                            "dailystoned@gmail.com", LocalDate.now(),
+                              new Address(500001, "Hyderabad", "Telengana")),
+                new Contact(0, "Scorpion", "Tail", 9247888899l,
+                        "thescorpiontail@gmail.com", LocalDate.now(),
+                              new Address(734104, "Darjeeling", "West Bengal"))
+        };
+        addressBookservice.readData();
+        addressBookservice.writeContacts(Arrays.asList(contacts));
+        long count = addressBookservice.count();
+        Assert.assertEquals(10, count);
     }
 }

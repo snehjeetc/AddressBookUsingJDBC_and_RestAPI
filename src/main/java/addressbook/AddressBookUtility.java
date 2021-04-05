@@ -76,6 +76,10 @@ public class AddressBookUtility {
         return addressBookDBService.readDataBetweenDates(addressMap ,from, to);
     }
 
+    public int count(){
+        return contactList.size();
+    }
+
     public int count(AddressBookDBService.CountBy param, String name) throws AddressBookDBExceptions {
         return addressBookDBService.count(param, name);
     }
@@ -122,5 +126,48 @@ public class AddressBookUtility {
         if(!addressMap.containsKey(address.getZip_code()))
             addressMap.put(address.getZip_code(), address);
         return contactAdded.getContactID();
+    }
+
+    public void writeContacts(List<Contact> contactList) {
+        Map<Integer, Boolean> additionStatusOfContact = new HashMap<>();
+        contactList.forEach(contact -> {
+            Runnable task = () -> {
+                additionStatusOfContact.put(contact.hashCode(), false);
+                Integer contactID = addressBookDBService.writeContact(contact);
+                if(contactID != null) {
+                    /*
+                    System.out.println(contact);
+                    Contact contactAdded = contact;
+                    contactAdded.setContactID(contactID);
+                    System.out.println(contact);
+
+                    //If you do this then the changes also reflects in your contact class
+                    //causing your program to have an infinite loop
+                    //as the hashcode of the contact object will change when the thread is going
+                    //to end
+                     */
+                    Contact contactAdded = new Contact(contactID, contact.getFirstName(), contact.getLastName(),
+                                                       contact.getPhoneNumber(), contact.getEmail(), contact.getDate(),
+                                                       contact.getAddress());
+                    this.addContact(contactAdded);
+                    if (!addressMap.containsKey(contactAdded.getAddress().getZip_code()))
+                        addressMap.put(contactAdded.getAddress().getZip_code(), contact.getAddress());
+                }
+                additionStatusOfContact.put(contact.hashCode(), true);
+            };
+            Thread thread = new Thread(task);
+            thread.start();
+        });
+        while(additionStatusOfContact.containsValue(false)){
+            try {
+                Thread.sleep(10);
+            }catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private void addContact(Contact contact) {
+        this.contactList.add(contact);
     }
 }

@@ -452,4 +452,114 @@ public class AddressBookDBService {
         contact.setAddress(address);
         return contact;
     }
+
+    private int writeRollBackOn(Connection connection, String sql) throws AddressBookDBExceptions {
+        int primaryKey = -1;
+        try(Statement statement = connection.createStatement()){
+            int rowsAffected = statement.executeUpdate(sql, Statement.RETURN_GENERATED_KEYS);
+            if(rowsAffected == 1) {
+                ResultSet resultSet = statement.getGeneratedKeys();
+                if(resultSet.next()) primaryKey = resultSet.getInt(1);
+            }
+            return primaryKey;
+        } catch (SQLException e) {
+            try {
+                connection.rollback();
+            } catch (SQLException exception) {
+                throw new AddressBookDBExceptions(AddressBookDBExceptions.Status.UPDATION_FAILURE,
+                                                  AddressBookDBExceptions.Status.TRANSACTION_FAILURE);
+            }
+        }
+        return primaryKey;
+    }
+
+    public Integer writeContact(Contact contact){
+        Connection connection = null;
+        try {
+            connection = this.getConnection();
+        } catch (AddressBookDBExceptions exceptions) {
+            exceptions.printStackTrace();
+        }
+        try {
+            connection.setAutoCommit(false);
+        } catch (SQLException e) {
+            e.printStackTrace();
+            try {
+                connection.close();
+            } catch (SQLException exception) {
+                exception.printStackTrace();
+            }
+            return null;
+        }
+        LocalDate currentDate = LocalDate.now();
+        Integer[] contactID = new Integer[] {-1};
+        Boolean[] errorInFirstTask = new Boolean[] {true};
+        Boolean[] errorInSecondTask = new Boolean[] {true};
+        Boolean[] isFirstTaskDone = new Boolean[] {false};
+        Connection finalConnection = connection;
+        Runnable taskUpdateContactTable = () -> {
+            String sql = String.format("INSERT INTO contact_table " +
+                            "(firstName, lastName, phoneNumber, email, added_date, zip_code) VALUES " +
+                            "('%s', '%s', %s, '%s', '%s', %s)",
+                             contact.getFirstName(), contact.getLastName(), contact.getPhoneNumber(),
+                             contact.getEmail(), currentDate, contact.getAddress().getZip_code());
+            try {
+                contactID[0] = this.writeRollBackOn(finalConnection, sql);
+                errorInSecondTask[0] = false;
+            } catch (AddressBookDBExceptions exceptions) {
+              exceptions.printStackTrace();
+            }
+            try {
+                if(!errorInSecondTask[0])
+                    finalConnection.commit();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }finally{
+                try {
+                    finalConnection.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
+        };
+
+        Runnable taskUpdateAddressTable = () -> {
+            try {
+                this.updateAdderssBookTable(finalConnection, contact.getAddress());
+                errorInFirstTask[0] = false;
+            } catch (SQLException e) {
+                try {
+                    finalConnection.rollback();
+                } catch (SQLException exception) {
+                    exception.printStackTrace();
+                }finally{
+                    isFirstTaskDone[0] = true;
+                }
+            }
+        };
+        Thread thread1 = new Thread(taskUpdateAddressTable, contact.getFirstName());
+        Thread thread2 = new Thread(taskUpdateContactTable, contact.getLastName());
+        thread1.start();
+        while(thread1.isAlive()){
+            try {
+                Thread.sleep(10);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+        if(errorInFirstTask[0]){
+            try {
+                finalConnection.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }finally{
+                return null;
+            }
+        }
+        thread2.start();
+        while(thread2.isAlive()) {}
+        if(errorInSecondTask[0])
+            return null;
+       return contactID[0];
+    }
 }
