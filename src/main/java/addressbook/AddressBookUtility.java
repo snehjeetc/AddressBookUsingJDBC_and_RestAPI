@@ -164,7 +164,6 @@ public class AddressBookUtility {
                     //as the hashcode of the contact object will change when the thread is going
                     //to end
 
-
                     Contact contactAdded = new Contact(contactID, contact.getFirstName(), contact.getLastName(),
                                                        contact.getPhoneNumber(), contact.getEmail(), contact.getDate(),
                                                        contact.getAddress());
@@ -189,5 +188,9 @@ public class AddressBookUtility {
 
     public void addContact(Contact contact) {
         this.contactList.add(contact);
+    }
+
+    public void remove(Contact contact) {
+        this.contactList.remove(contact);
     }
 }
