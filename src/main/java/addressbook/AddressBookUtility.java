@@ -73,7 +73,7 @@ public class AddressBookUtility {
     }
 
     private Contact getContact(int contactID) {
-        return contactList.stream().filter(contact -> contact.getContactID() == contactID)
+        return contactList.stream().filter(contact -> contact.getId() == contactID)
                                    .findFirst()
                                    .orElse(null);
     }
@@ -93,19 +93,19 @@ public class AddressBookUtility {
     public int writeContact(String firstName, String lastName, long phoneNumber, String email) throws AddressBookDBExceptions {
         Contact contactAdded = this.addressBookDBService.writeContact(firstName, lastName, phoneNumber, email);
         contactList.add(contactAdded);
-        return contactAdded.getContactID();
+        return contactAdded.getId();
     }
 
     public int writeContact(String firstName, String lastName, long phoneNumber) throws AddressBookDBExceptions {
         Contact contactAdded = this.addressBookDBService.writeContact(firstName, lastName, phoneNumber);
         contactList.add(contactAdded);
-        return contactAdded.getContactID();
+        return contactAdded.getId();
     }
 
     public int writeContact(String firstName, long phoneNumber) throws AddressBookDBExceptions {
         Contact contactAdded = this.addressBookDBService.writeContact(firstName, phoneNumber);
         contactList.add(contactAdded);
-        return contactAdded.getContactID();
+        return contactAdded.getId();
     }
 
     public int writeContact(String firstName, String lastName,
@@ -115,7 +115,7 @@ public class AddressBookUtility {
         contactList.add(contactAdded);
         if(!addressMap.containsKey(address.getZip_code()))
             addressMap.put(address.getZip_code(), address);
-        return contactAdded.getContactID();
+        return contactAdded.getId();
     }
 
     public int writeContact(String firstName, String lastName, long phoneNumber, Address address) throws AddressBookDBExceptions {
@@ -123,7 +123,7 @@ public class AddressBookUtility {
         contactList.add(contactAdded);
         if(!addressMap.containsKey(address.getZip_code()))
             addressMap.put(address.getZip_code(), address);
-        return contactAdded.getContactID();
+        return contactAdded.getId();
     }
 
     public int writeContact(String firstName, long phoneNumber, Address address) throws AddressBookDBExceptions {
@@ -131,7 +131,7 @@ public class AddressBookUtility {
         contactList.add(contactAdded);
         if(!addressMap.containsKey(address.getZip_code()))
             addressMap.put(address.getZip_code(), address);
-        return contactAdded.getContactID();
+        return contactAdded.getId();
     }
 
     public void writeContacts(List<Contact> contactList) {
@@ -173,7 +173,7 @@ public class AddressBookUtility {
         }
     }
 
-    private void addContact(Contact contact) {
+    public void addContact(Contact contact) {
         this.contactList.add(contact);
     }
 }

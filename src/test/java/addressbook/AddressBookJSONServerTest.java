@@ -5,6 +5,7 @@ import detailsofperson.Address;
 import detailsofperson.Contact;
 import io.restassured.RestAssured;
 import io.restassured.response.Response;
+import io.restassured.specification.RequestSpecification;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -29,6 +30,39 @@ public class AddressBookJSONServerTest {
             System.out.println(contact);
         long entries = addressBookService.count();
         Assert.assertEquals(5, entries);
+    }
+
+    @Test
+    public void givenList_Of_New_Employees_WhenAdded_ShouldMatch201ResponseCode_AndTheTotalEntries(){
+        Contact[] contacts = new Contact[]{
+                new Contact(0, "Raman", "Bharali", 8823112349l,
+                        "ramanbharali@gmail.com", LocalDate.now(),
+                        new Address(370001, "Bhuj", "Gujarat")),
+                new Contact(0, "Lal", "Badshah", 7772345421l,
+                        "lalbadshah@gmail.com", LocalDate.now(),
+                        new Address(492001, "Ranchi", "Chattishgarh")),
+                new Contact(0, "Shekhar", "Faker", 9865432133l,
+                        "fakeit@gmail.com", LocalDate.now(),
+                        new Address(110001, "Delhi", "Delhi"))
+        };
+        Contact[] contactList = this.getContactList();
+        AddressBookUtility addressBookService = new AddressBookUtility(Arrays.asList(contactList));
+        for(Contact contact : contacts){
+            Response response = addContactToJsonServer(contact);
+            Assert.assertEquals(201, response.getStatusCode());
+            Contact contactAdded = new Gson().fromJson(response.asString(), Contact.class);
+            addressBookService.addContact(contactAdded);
+        }
+        long entries = addressBookService.count();
+        Assert.assertEquals(8, entries);
+    }
+
+    private Response addContactToJsonServer(Contact contact) {
+        String empJson = new Gson().toJson(contact);
+        RequestSpecification request = RestAssured.given();
+        request.header("Content-Type", "application/json");
+        request.body(empJson);
+        return request.post("/contactlist");
     }
 
     private Contact[] getContactList() {

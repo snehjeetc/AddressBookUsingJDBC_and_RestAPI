@@ -1,11 +1,12 @@
 package detailsofperson;
-import scannerwrapper.ScannerWrapped;
 
 import java.time.LocalDate;
 import java.util.Objects;
 
 public class Contact {
-	int contactID;
+	int id;             //Note for JSON object's first property should be "id"
+                        //Or else it the status cod will be 500
+                        //TypeError: Cannot read property 'id' of undefined
 	String firstName;
 	String lastName;
 	long phoneNumber;
@@ -19,7 +20,7 @@ public class Contact {
 
 	public Contact(int contactID, String firstName, String lastName, long phoneNumber,
                    String email, LocalDate added_date, Address address) {
-        this.contactID = contactID;
+        this.id = contactID;
         this.firstName = firstName;
         this.lastName = lastName;
         this.phoneNumber = phoneNumber;
@@ -28,12 +29,12 @@ public class Contact {
         this.address = address;
     }
 
-    public int getContactID() {
-        return contactID;
+    public int getId() {
+        return id;
     }
 
-    public void setContactID(int contactID) {
-        this.contactID = contactID;
+    public void setId(int id) {
+        this.id = id;
     }
 
     public String getFirstName() {
@@ -83,7 +84,7 @@ public class Contact {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Contact contact = (Contact) o;
-        return contactID == contact.contactID &&
+        return id == contact.id &&
                 phoneNumber == contact.phoneNumber &&
                 Objects.equals(firstName, contact.firstName) &&
                 Objects.equals(lastName, contact.lastName) &&
@@ -92,12 +93,12 @@ public class Contact {
 
     @Override
     public int hashCode() {
-        return Objects.hash(contactID, firstName, phoneNumber);
+        return Objects.hash(id, firstName, phoneNumber);
     }
 
     @Override
     public String toString(){
-	    return contactID + " " + firstName + " " + phoneNumber;
+	    return id + " " + firstName + " " + phoneNumber;
     }
 
 
