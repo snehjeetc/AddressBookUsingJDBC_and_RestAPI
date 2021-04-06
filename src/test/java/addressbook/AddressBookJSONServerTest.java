@@ -57,11 +57,27 @@ public class AddressBookJSONServerTest {
         Assert.assertEquals(8, entries);
     }
 
-    private Response addContactToJsonServer(Contact contact) {
-        String empJson = new Gson().toJson(contact);
+    @Test
+    public void givenNewPhoneNumberOfAContact_WhenUpdated_ShouldMatch200_Response(){
+        Contact[] contactList = this.getContactList();
+        AddressBookUtility addressBookService = new AddressBookUtility(Arrays.asList(contactList));
+        addressBookService.updateData("Lal", "Badshah", 7700000000l);
+        Contact contact = addressBookService.getContact("Lal", "Badshah");
+
+        String contactJson = new Gson().toJson(contact);
         RequestSpecification request = RestAssured.given();
         request.header("Content-Type", "application/json");
-        request.body(empJson);
+        request.body(contactJson);
+        Response response = request.put("/contactlist/"+contact.getId());
+        int statusCode = response.getStatusCode();
+        Assert.assertEquals(200, statusCode);
+    }
+
+    private Response addContactToJsonServer(Contact contact) {
+        String contactJson = new Gson().toJson(contact);
+        RequestSpecification request = RestAssured.given();
+        request.header("Content-Type", "application/json");
+        request.body(contactJson);
         return request.post("/contactlist");
     }
 

@@ -72,7 +72,19 @@ public class AddressBookUtility {
             addressMap.put(address.getZip_code(), address);
     }
 
-    private Contact getContact(int contactID) {
+    public void updateData(String firstName, String lastName, long phoneNumber){
+        Contact contact = this.getContact(firstName, lastName);
+        if(contact != null) contact.setPhoneNumber(phoneNumber);
+    }
+
+    public Contact getContact(String firstName, String lastName) {
+        return contactList.stream()
+                          .filter(contact -> (firstName + lastName).equals(contact.getFirstName()+contact.getLastName()))
+                          .findFirst()
+                          .orElse(null);
+    }
+
+    public Contact getContact(int contactID) {
         return contactList.stream().filter(contact -> contact.getId() == contactID)
                                    .findFirst()
                                    .orElse(null);
@@ -144,17 +156,19 @@ public class AddressBookUtility {
                     /*
                     System.out.println(contact);
                     Contact contactAdded = contact;
-                    contactAdded.setContactID(contactID);
+                    contactAdded.setId(contactID);
                     System.out.println(contact);
-
+                    */
                     //If you do this then the changes also reflects in your contact class
                     //causing your program to have an infinite loop
                     //as the hashcode of the contact object will change when the thread is going
                     //to end
-                     */
+
+
                     Contact contactAdded = new Contact(contactID, contact.getFirstName(), contact.getLastName(),
                                                        contact.getPhoneNumber(), contact.getEmail(), contact.getDate(),
                                                        contact.getAddress());
+
                     this.addContact(contactAdded);
                     if (!addressMap.containsKey(contactAdded.getAddress().getZip_code()))
                         addressMap.put(contactAdded.getAddress().getZip_code(), contact.getAddress());
